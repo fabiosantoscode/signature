@@ -1,26 +1,29 @@
 (function () {
+/*jshint asi:true*/
 'use strict';
 
-var rSignature = /^function\s*\((.*?)\)\s*{}$/m,
-    rArgSplit = /\b(\w+?)\b/gm,
+var rSignature = /^function\s*\((.*?)\)\s*{.*?}$/m,
     rComments = /\/\*(.*?)\*\//gm,
     rSingleLineComments = /\/\/.*$/gm,
     specialArguments = ['remainingArguments', 'mappingOfArguments', 'argumentArray'],
     arraySlice = Array.prototype.slice
 
 function signature(sigString, func) {
+    var parsed
     if (!func) {
         func = sigString
+        parsed = readFunc(func)
+    } else {
+        throw new Error('Not implemented!')
     }
+    var that = this
     return function () {
-        return func.apply(this, arguments)
+        return func.apply(that, arguments)
     }
 }
 
 function processSpecial(args) {
-    var specialRemoved = args.filter(function (val) {
-            return specialArguments.indexOf(val) === -1
-        })
+    var specialRemoved = arraySlice.call(args)
     specialArguments.forEach(function (specialArgName) {
         specialRemoved[specialArgName] = args[args.indexOf(specialArgName)]
     })
@@ -32,18 +35,23 @@ function readSigString(s) {
     tokens = tokens.filter(function (val) {return val !== ''})
 }
 
-function read(f) {
+function readFunc(f) {
     var signature = rSignature.exec(f.toString())[1]
     var arg,
+        rSplit = /\b(\w+)\b/gim,
         positionalArgs = []
-    while (arg = rArgSplit.exec(signature)) {
-        positionalArgs.push(arg[1])
+    arg = 1
+    while (arg) {
+        arg = rSplit.exec(signature)
+        if (arg != null) {
+            positionalArgs.push(arg[1])
+        }
     }
     return processSpecial(arraySlice.call(positionalArgs))
 }
 
 module.exports = signature
-signature.read = read
+signature.read = readFunc
 signature.configuration = {}
 
 }())

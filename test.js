@@ -27,13 +27,13 @@ describe('Argument reader', function () {
         sig3.should.eql(['a', 'b', 'c'])
     })
 
-    it('detects "remainingArguments", "mappingOfArguments", and "argumentArray", which are ignored in the list of arguments', function () {
+    it('detects "remainingArguments", "mappingOfArguments", and "argumentArray", which are treated specially', function () {
         var subject = function (remainingArguments, mappingOfArguments, argumentArray, c) {}
         var sig
         sig = signature.read(subject)
-        sig.should.not.include('argumentArray')
-        sig.should.not.include('mappingOfArguments')
-        sig.should.not.include('remainingArguments')
+        sig.should.have.property('remainingArguments')
+        sig.should.have.property('mappingOfArguments')
+        sig.should.have.property('argumentArray')
         sig.should.include('c')
     })
     // TODO it('can be configured', function () {})
