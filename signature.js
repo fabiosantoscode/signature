@@ -2,11 +2,30 @@
 /*jshint asi:true*/
 'use strict';
 
-var rSignature = /^function\s*\((.*?)\)\s*{.*?}$/m,
-    rComments = /\/\*(.*?)\*\//gm,
+var rSignature = /^\s*function.*?\((.*?)\).+/m,
+    rMultiLineComments = /\/\*(.*?)\*\//gm,
     rSingleLineComments = /\/\/.*$/gm,
-    specialArguments = ['remainingArguments', 'mappingOfArguments', 'argumentArray'],
+    specialArguments = ['remainingArguments', 'mappingOfArguments', 'arrayOfArguments'],
     arraySlice = Array.prototype.slice
+
+
+function getApplyArgs(argumentObject, signature) {
+    var cpy = arraySlice.call(signature.basic),
+        argCpy = arraySlice.call(argumentObject, 0, signature.basic.length)
+    if (signature.remainingArguments !== undefined) {
+        argCpy[signature.remainingArguments] = arraySlice.call(argumentObject, signature.basic.length, undefined)
+    }
+    if (signature.mappingOfArguments !== undefined) {
+        var map = argCpy[signature.mappingOfArguments] = {}
+        for (var i = 0; i < signature.basic.length; i++) {
+            map[signature.basic[i]] = argCpy[signature.all.indexOf(signature.basic[i])]
+        }
+    }
+    if (signature.arrayOfArguments !== undefined) {
+        argCpy[signature.arrayOfArguments] = arraySlice.call(argumentObject)
+    }
+    return argCpy
+}
 
 function signature(sigString, func) {
     var parsed
@@ -18,16 +37,23 @@ function signature(sigString, func) {
     }
     var that = this
     return function () {
-        return func.apply(that, arguments)
+        return func.apply(that, getApplyArgs(arguments, parsed))
     }
 }
 
 function processSpecial(args) {
-    var specialRemoved = arraySlice.call(args)
-    specialArguments.forEach(function (specialArgName) {
-        specialRemoved[specialArgName] = args[args.indexOf(specialArgName)]
-    })
-    return specialRemoved
+    var argObj = {}
+    argObj.all = arraySlice.call(args)
+    argObj.basic = argObj.all
+        .filter(function (name) {
+            return specialArguments.indexOf(name) === -1
+        })
+    specialArguments
+        .forEach(function (name) {
+            var ind = argObj.all.indexOf(name)
+            argObj[name] = ind > -1 ? ind : undefined
+        })
+    return argObj
 }
 
 function readSigString(s) {
@@ -36,7 +62,11 @@ function readSigString(s) {
 }
 
 function readFunc(f) {
-    var signature = rSignature.exec(f.toString())[1]
+    var fStr = f.toString()
+        .replace(rSingleLineComments, '')
+        .replace(/\s/gm, '')
+        .replace(rMultiLineComments, '')
+    var signature = rSignature.exec(fStr)[1]
     var arg,
         rSplit = /\b(\w+)\b/gim,
         positionalArgs = []
