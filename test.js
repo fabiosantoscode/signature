@@ -82,13 +82,14 @@ describe('Argument reader', function () {
     // TODO it('can be configured', function () {})
     it('ignores comments and whitespace in the function signature', function () {
         function mess(    remainingArguments, 
-                a/*arrayOfArguments*/,     c     
+                a/*arrayOfArguments*/,     c   
+                // mappingOfArguments,   
                     /*,*/ /*F*/) {
-            !hi
         }
         var sig = signature.read(mess)
         sig.should.have.property('remainingArguments')
         sig.should.not.have.property('arrayOfArguments')
+        sig.should.not.have.property('mappingOfArguments')
         sig.all.should.include('a')
         sig.all.should.not.include('F')
     })

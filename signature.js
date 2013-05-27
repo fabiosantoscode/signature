@@ -73,7 +73,7 @@ function readFunc(f) {
     arg = 1
     while (arg) {
         arg = rSplit.exec(signature)
-        if (arg != null) {
+        if (arg !== null) {
             positionalArgs.push(arg[1])
         }
     }
@@ -84,4 +84,4 @@ module.exports = signature
 signature.read = readFunc
 signature.configuration = {}
 
-}())
+}());
